@@ -26,6 +26,7 @@
 
 ```bash
 git clone https://github.com/V0LT0R/DIPLOMKA_COLLEGE.git
+cd DIPLOMKA_COLLEGE
 ```
 
 2. Установите зависимости:
