@@ -2,7 +2,6 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 import extra_streamlit_components as stx
-from sklearn.cluster import AgglomerativeClustering
 
 st.set_page_config(page_title="Analysis", page_icon="🔥", layout="wide")
 
