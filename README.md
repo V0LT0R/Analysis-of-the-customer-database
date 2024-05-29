@@ -25,8 +25,7 @@
 1. Клонируйте репозиторий проекта:
 
 ```bash
-git clone https://github.com/yourusername/yourproject.git
-cd yourproject
+git clone https://github.com/V0LT0R/DIPLOMKA_COLLEGE.git
 ```
 
 2. Установите зависимости:
