@@ -1,105 +1,103 @@
-import streamlit as st
 import pandas as pd
-from langdetect import detect
+import streamlit as st
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.pipeline import make_pipeline
 from sklearn.metrics import classification_report
-import spacy
-import pickle
+import joblib
+import os
 
-# Загрузка данных
-df2 = pd.read_excel('./input_data/review.xlsx')
-df = df2.copy()
-df.drop(columns=['СoolServis, автосервис'], inplace=True)
-df = df.rename(columns = {'с+A1:B23татус комментариев' : 'sentiment'})
-df.dropna(inplace=True)
-# Удаление строк с отсутствующими значениями меток классов
-df.dropna(subset=['sentiment'], inplace=True)
+if 'df' not in st.session_state:
+    st.warning("Пожалуйста, загрузите файл на главной странице!")
+    st.stop()
 
+df = st.session_state['df']
 
+# Функция для обучения модели
+def train_model(data):
+    X_train, X_test, y_train, y_test = train_test_split(data['comment'], data['label'], test_size=0.2, random_state=42)
+    model = make_pipeline(TfidfVectorizer(), MultinomialNB())
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    st.text("Classification Report:")
+    st.text(classification_report(y_test, y_pred, zero_division=0))
+    joblib.dump(model, 'sentiment_model.pkl')
+    return model
 
-# Определение языка комментариев
-def detect_language(text):
-    try:
-        return detect(text)
-    except:
-        return 'unknown'
+# Функция для классификации комментариев
+def classify_comments(model, comments):
+    predictions = model.predict(comments)
+    classified_data = pd.DataFrame({'comment': comments, 'label': predictions})
+    return classified_data
 
-df['language'] = df['Комментарии'].apply(detect_language)
+# Streamlit UI
+st.title("Классификация комментариев")
+st.markdown("##")
 
-# Подсчет количества комментариев на казахском языке
-kazakh_comments_count = df[df['language'] == 'kk'].shape[0]
+# Проверка на наличие обученной модели
+model = None
+model_path = 'sentiment_model.pkl'
 
-# Удаление комментариев на казахском языке
-df = df[df['language'] != 'kk']
+# Загрузка файла с размеченными данными для обучения модели
+training_data = df.copy()
 
-# Подготовка данных для обучения
-df['label'] = df['sentiment'].map({'POSITIVE': 1, 'NEGATIVE': -1, 'NEUTRAL': 0})
+# Переименование и очистка данных
+training_data.columns = training_data.columns.str.strip()  # Убираем пробелы вокруг имен столбцов
 
-# Создание обучающей и тестовой выборки
-X = df['Комментарии']
-y = df['label']
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Загрузка обученной модели (если уже обучена ранее)
+if os.path.exists(model_path):
+    model = joblib.load(model_path)
 
-# Загрузка модели spaCy для русского языка
-nlp = spacy.load('ru_core_news_sm')
+# Загрузка файла с комментариями для классификации
+new_data = df.copy()
+new_data = new_data.drop(columns=['ID_Client', 'Имя', 'Фамилия', 'Email', 'Телефон', 'Дата', 'Услуги', 'Цена'])
+new_data = new_data.dropna()
+if 'comment' not in new_data.columns:
+    st.error("В файле отсутствует столбец 'comment'. Пожалуйста, проверьте структуру данных.")
+    st.write(new_data.columns)
+    st.stop()
+# Переименование и очистка данных
+new_data.columns = new_data.columns.str.strip()  # Убираем пробелы вокруг имен столбцов
 
-# Функция для лемматизации текста
-def lemmatize_text(text):
-    doc = nlp(text)
-    return ' '.join([token.lemma_ for token in doc])
+    
+if model:
+    # Классификация комментариев
+    classified_data = classify_comments(model, new_data['comment'])
+        
+    # Разделение на категории
+    positive_comments = new_data[new_data['label'] == 1]
+    neutral_comments = new_data[new_data['label'] == 0]
+    negative_comments = new_data[new_data['label'] == -1]
 
-X_train_lemmatized = X_train.apply(lemmatize_text)
-X_test_lemmatized = X_test.apply(lemmatize_text)
+    percent_pos = round((100 * positive_comments.shape[0] / new_data.shape[0]), 1)
+    percent_neu = round((100 * neutral_comments.shape[0] / new_data.shape[0]), 1)
+    percent_neg = round((100 * negative_comments.shape[0] / new_data.shape[0]), 1)
+    
 
-# Преобразование текста в TF-IDF признаки
-vectorizer = TfidfVectorizer(max_features=5000)
-X_train_tfidf = vectorizer.fit_transform(X_train_lemmatized)
-X_test_tfidf = vectorizer.transform(X_test_lemmatized)
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        # Вывод результатов
+        st.subheader(f"Процент положительных комментариев {percent_pos}%")
 
-# Обучение модели логистической регрессии
-model = LogisticRegression(max_iter=1000)
-model.fit(X_train_tfidf, y_train)
+    with col2:
+        st.subheader(f"Процент нейтральных комментариев {percent_neu}%")
 
-# Оценка модели
-y_pred = model.predict(X_test_tfidf)
-report = classification_report(y_test, y_pred, target_names=['NEGATIVE', 'NEUTRAL', 'POSITIVE'])
-print(report)
+    with col3:
+        st.subheader(f"Процент негативных комментариев {percent_neg}%")
 
-# Сохранение модели и векторизатора
-with open('sentiment_model.pkl', 'wb') as f:
-    pickle.dump((vectorizer, model), f)
-
-# Функция для предсказания тональности
-def get_sentiment(text):
-    lemmatized_text = lemmatize_text(text)
-    vectorized_text = vectorizer.transform([lemmatized_text])
-    sentiment = model.predict(vectorized_text)[0]
-    if sentiment == 1:
-        return 'POSITIVE'
-    elif sentiment == -1:
-        return 'NEGATIVE'
-    else:
-        return 'NEUTRAL'
-
-df['sentiment'] = df['Комментарии'].apply(get_sentiment)
-
-# Разделение данных на три таблицы по полярности
-positive_comments = df[df['sentiment'] == 'POSITIVE']
-neutral_comments = df[df['sentiment'] == 'NEUTRAL']
-negative_comments = df[df['sentiment'] == 'NEGATIVE']
-
-# Вывод данных с использованием Streamlit
-st.title('Анализ комментариев')
-
-st.write(f'Количество комментариев на казахском языке: {kazakh_comments_count}')
-
-st.header('Положительные комментарии')
-st.dataframe(positive_comments)
-
-st.header('Нейтральные комментарии')
-st.dataframe(neutral_comments)
-
-st.header('Отрицательные комментарии')
-st.dataframe(negative_comments)
+    st.markdown("---")
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        # Вывод результатов
+        st.subheader("Положительные комментарии")
+        st.dataframe(positive_comments[['comment']], width=700)
+    with col2:
+        st.subheader("Нейтральные комментарии")
+        st.dataframe(neutral_comments[['comment']], width=700)
+    with col3:
+        st.subheader("Негативные комментарии")
+        st.dataframe(negative_comments[['comment']], width=700)
+else:
+    st.write("Модель не обучена. Загрузите файл с размеченными данными для обучения модели.")

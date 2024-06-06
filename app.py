@@ -84,20 +84,22 @@ col1, col2 = st.columns([1, 1], gap="medium")
 
 # График зависимости покупок от времени
 with col1:
+    st.subheader("Зависимость покупок от времени")
     df_filtered['Month'] = df_filtered['Дата'].dt.to_period('M').astype(str)
     sales_over_time = df_filtered.groupby('Month')['Цена'].sum().reset_index()
-    fig_sales_over_time = px.line(sales_over_time, x='Month', y='Цена', title='Зависимость покупок от времени')
+    fig_sales_over_time = px.line(sales_over_time, x='Month', y='Цена', title='')
     st.plotly_chart(fig_sales_over_time, use_container_width=True)
 
 # График прибыльности каждой из услуг
 with col2:
+    st.subheader("Прибыльность каждой из услуг")
     # Разделяем строки с услугами, чтобы каждая услуга была в отдельной строке
     df_services_split = df_filtered_2graph.drop('Услуги', axis=1).join(
         df_filtered_2graph['Услуги'].str.split(',', expand=True).stack().reset_index(level=1, drop=True).rename('Услуги'))
     # Фильтруем только выбранные услуги
     df_services_split = df_services_split[df_services_split['Услуги'].isin(services)]
     profit_by_service = df_services_split.groupby('Услуги')['Цена'].sum().reset_index()
-    fig_profit_by_service = px.bar(profit_by_service, orientation='h', y='Услуги', x='Цена', title='Прибыльность каждой из услуг')
+    fig_profit_by_service = px.bar(profit_by_service, orientation='h', y='Услуги', x='Цена', title='')
     fig_profit_by_service.update_layout(xaxis_tickangle=0, margin=dict(l=20, r=20, t=50, b=100))
     st.plotly_chart(fig_profit_by_service, use_container_width=True)
 

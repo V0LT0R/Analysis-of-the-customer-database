@@ -208,7 +208,7 @@ df.drop(columns=['Год'], inplace=True)
 #добавить отзывы случайным людям
 df2 = pd.read_excel('./input_data/review.xlsx')
 df2_init = df2.copy()
-df2_init.drop(columns=['с+A1:B23татус комментариев', 'СoolServis, автосервис'], inplace=True)
+# df2_init.drop(columns=['с+A1:B23татус комментариев', 'СoolServis, автосервис'], inplace=True)
 
 # Объединение данных в один датасет
 merged_df = pd.concat([df, df2_init], ignore_index=True)
@@ -226,10 +226,12 @@ for i, row in df.iterrows():
         review_index = review_indexes[rev_ind]
         rev_ind += 1
         # Присваиваем клиенту отзыв из перемешанного списка
-        df.at[i, 'Комментарии'] = df2_init.at[review_index, 'Комментарии']
+        df.at[i, 'comment'] = df2_init.at[review_index, 'comment']
+        df.at[i, 'label'] = df2_init.at[review_index, 'label']
     else:
         # Если отзывов не хватает, оставляем пустое значение
-        df.at[i, 'Комментарии'] = None
+        df.at[i, 'comment'] = None
+        df.at[i, 'label'] = None
 
 # Сохраните датафрейм в CSV
 df.to_csv('./input_data/dataset.csv', index=False)

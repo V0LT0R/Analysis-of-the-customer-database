@@ -58,7 +58,7 @@ label_positions = {i: cluster_centers.loc[cluster_centers['Кластер'] == i
 # Визуализация кластеров с Plotly
 fig_clusters = px.scatter(
     visits, x='ID_Client', y='Количество посещений', color='Кластер',
-    title='Иерархическая Кластеризация',
+    title='',
     labels={'ID_Client': 'ID Клиента', 'Количество посещений': 'Количество посещений'}
 )
 
@@ -76,6 +76,7 @@ for cluster_num, label in cluster_labels.items():
     )
 col1, col2 = st.columns([1, 1], gap="medium")
 with col1:
+    st.subheader("Иерархическая Кластеризация")
     st.plotly_chart(fig_clusters, use_container_width=True)
 
 customer_data = df.groupby('ID_Client').agg(
@@ -111,7 +112,7 @@ trace1 = go.Scatter3d(
 
 df_change = [trace1]
 layout = go.Layout(
-    title='Кластеризация клиентов',
+    title=' ',
     margin=dict(l=0, r=0, b=0, t=0),
     scene=dict(
         xaxis=dict(title='Количество посещений'),
@@ -122,6 +123,7 @@ layout = go.Layout(
 
 fig = go.Figure(data=df_change, layout=layout)
 with col2:
+    st.subheader("3D Кластеризация")
     st.plotly_chart(fig, use_container_width=True)
 
 # Подготовка данных для ABC и XYZ анализа
