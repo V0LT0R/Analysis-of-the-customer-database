@@ -77,6 +77,12 @@ for cluster_num, label in cluster_labels.items():
 col1, col2 = st.columns([1, 1], gap="medium")
 with col1:
     st.subheader("Иерархическая Кластеризация")
+    fig_clusters.update_layout(
+        xaxis_title_font=dict(size=24),  
+        yaxis_title_font=dict(size=24),  
+        xaxis_tickfont=dict(size=14),    
+        yaxis_tickfont=dict(size=14)    
+        )
     st.plotly_chart(fig_clusters, use_container_width=True)
 
 customer_data = df.groupby('ID_Client').agg(
@@ -115,9 +121,9 @@ layout = go.Layout(
     title=' ',
     margin=dict(l=0, r=0, b=0, t=0),
     scene=dict(
-        xaxis=dict(title='Количество посещений'),
-        yaxis=dict(title='Средний чек'),
-        zaxis=dict(title='ID клиента')
+        xaxis=dict(title='Количество посещений', titlefont=dict(size=24), tickfont=dict(size=14)),
+        yaxis=dict(title='Средний чек', titlefont=dict(size=24), tickfont=dict(size=14)),
+        zaxis=dict(title='ID клиента', titlefont=dict(size=24), tickfont=dict(size=14))
     )
 )
 

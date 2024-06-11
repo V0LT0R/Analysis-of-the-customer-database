@@ -88,6 +88,14 @@ with col1:
     df_filtered['Month'] = df_filtered['Дата'].dt.to_period('M').astype(str)
     sales_over_time = df_filtered.groupby('Month')['Цена'].sum().reset_index()
     fig_sales_over_time = px.line(sales_over_time, x='Month', y='Цена', title='')
+    fig_sales_over_time.update_layout(
+        xaxis_title='Month',
+        yaxis_title='Цена',
+        xaxis_title_font=dict(size=24),  
+        yaxis_title_font=dict(size=24),  
+        xaxis_tickfont=dict(size=14),    
+        yaxis_tickfont=dict(size=14)     
+    )
     st.plotly_chart(fig_sales_over_time, use_container_width=True)
 
 # График прибыльности каждой из услуг
@@ -100,7 +108,14 @@ with col2:
     df_services_split = df_services_split[df_services_split['Услуги'].isin(services)]
     profit_by_service = df_services_split.groupby('Услуги')['Цена'].sum().reset_index()
     fig_profit_by_service = px.bar(profit_by_service, orientation='h', y='Услуги', x='Цена', title='')
-    fig_profit_by_service.update_layout(xaxis_tickangle=0, margin=dict(l=20, r=20, t=50, b=100))
+    fig_profit_by_service.update_layout(
+        xaxis_tickangle=0, 
+        # margin=dict(l=20, r=20, t=50, b=100),
+        xaxis_title_font=dict(size=24),  
+        yaxis_title_font=dict(size=24),  
+        xaxis_tickfont=dict(size=14),    
+        yaxis_tickfont=dict(size=14)    
+        )
     st.plotly_chart(fig_profit_by_service, use_container_width=True)
 
 # ---- HIDE STREAMLIT STYLE ----
